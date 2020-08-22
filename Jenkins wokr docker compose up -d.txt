@@ -1,0 +1,11 @@
+
+sudo gpasswd -a jenkins docker
+
+systemctl daemon-reload
+systemctl restart docker
+
+sudo service jenkins restart
+
+docker rmi -f $(docker images -a -q)
+
+docker rm -vf $(docker ps -a -q)

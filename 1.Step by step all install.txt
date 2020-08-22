@@ -1,0 +1,237 @@
+--------ufw---------
+ufw app list
+ufw allow OpenSSH
+ufw enable
+ufw allow 8080
+ufw status
+
+------------mc------------
+sudo add-apt-repository universe
+sudo apt update
+sudo apt install mc
+----------docker----------
+sudo apt-get install docker-ce
+sudo apt install apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+ sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+sudo apt update
+apt-cache policy docker-ce
+sudo apt install docker-ce
+sudo usermod -aG docker ${USER}
+docker --version
+sudo curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+----------Install postres---------
+sudo apt-get install postgresql postgresql-contrib
+service postgresql
+service postgresql status
+sudo su - postgres
+invoke-rc.d postgresql restart
+sudo service postgresql restart
+invoke-rc.d postgresql reload
+ufw status
+ufw allow 5432
+ufw status
+sudo service postgresql restart
+invoke-rc.d postgresql reload
+
+
+--------------------java------------------------
+sudo apt update
+sudo apt install openjdk-8-jre-headless
+sudo apt install openjdk-8-jdk
+java -version
+
+---------------------maven--------------
+sudo apt install maven
+mvn -v
+
+---------------------nginx--------------
+sudo apt install nginx
+sudo ufw allow 443/tcp
+ufw allow 80
+ufw status
+sudo service nginx restart
+
+-------------/etc/nginx/sites-available/default change into :-------------
+
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# https://www.nginx.com/resources/wiki/start/
+# https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/
+# https://wiki.debian.org/Nginx/DirectoryStructure
+#
+# In most cases, administrators will remove this file from sites-enabled/ and
+# leave it as reference inside of sites-available where it will continue to be
+# updated by the nginx packaging team.
+#
+# This file will automatically load configuration files provided by other
+# applications, such as Drupal or Wordpress. These applications will be made
+# available underneath a path with that package name, such as /drupal8.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+server {
+    listen        80;
+    server_name   stepmanul.tk *.stepmanul.tk;
+    location / {
+        proxy_pass         http://localhost:8082;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection keep-alive;
+        proxy_set_header   Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+server {
+    listen        80;
+    server_name   epicentrgachimuchi.pp.ua *epicentrgachimuchi.pp.ua;
+    location / {
+        proxy_pass         http://localhost:8082;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection keep-alive;
+        proxy_set_header   Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+server {
+    listen        80;
+    server_name   stepmanul.xyz *.stepmanul.xyz;
+    location / {
+        proxy_pass         http://localhost:8084;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection keep-alive;
+        proxy_set_header   Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
+
+# Virtual Host configuration for example.com
+#
+# You can move that to a different file under sites-available/ and symlink that
+# to sites-enabled/ to enable it.
+#
+#server {
+#  listen 80;
+#  listen [::]:80;
+#
+#  server_name example.com;
+#
+#  root /var/www/example.com;
+#  index index.html;
+#
+#  location / {
+#    try_files $uri $uri/ =404;
+#  }
+#}
+
+---------/etc/systemd/system/gachi.service--------------
+[Unit]
+Description= GachiProject
+[Service]
+User=root
+Type=simple
+ExecStart=/usr/bin/java -jar /var/lib/jenkins/workspace/volodya/target/pv825.jar --server.port=8082
+SuccessExitStatus=143
+[Install]
+WantedBy=multi-user.target
+
+------------Install Jenkins---------------
+wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+sudo sh -c 'echo deb https://pkg.jenkins.io/debian binary/ > \
+    /etc/apt/sources.list.d/jenkins.list'
+sudo apt-get update
+sudo apt-get install jenkins
+
+------------Jenkins start service----------------------
+----------- etc/sudoers---------------
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# Please consider adding local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+# See the man page for details on how to write a sudoers file.
+#
+Defaults  env_reset
+Defaults  mail_badpass
+Defaults  secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root  ALL=(ALL:ALL) ALL
+
+# Members of the admin group may gain root privileges
+%admin ALL=(ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo  ALL=(ALL:ALL) ALL
+jenkins ALL=(ALL) NOPASSWD: ALL
+# See sudoers(5) for more information on "#include" directives:
+
+#includedir /etc/sudoers.d
+
+--------Jenkins file-------------
+#!groovy
+//  groovy Jenkinsfile
+properties([disableConcurrentBuilds()])
+
+pipeline  {
+    agent { 
+        label 'master'
+        }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+        timestamps()
+    }
+    stages {
+
+		stage("Create docker image") {
+            steps {
+                echo 'Stop process ...'
+                dir('.'){
+                  sh "sudo systemctl stop gachi"
+
+                }
+            }
+        }
+        stage("mvn") {
+            steps {
+                 echo 'Mvn ...'
+                 dir('.'){
+                      sh "mvn package"
+
+                 }
+            }
+        }
+        stage("start") {
+            steps {
+                 echo 'Start ...'
+                 dir('.'){
+                       sh "sudo systemctl start gachi"
+
+                 }
+            }
+        }
+
+    }
+}
